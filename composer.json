@@ -1,0 +1,37 @@
+{
+    "name": "xtend-laravel/addon-payment-gateway-paypal",
+    "description": "Paypal Payment Gateway for XtendLunar",
+    "type": "library",
+    "keywords": [
+        "laravel",
+        "xtendlunar",
+        "payment",
+        "gateway",
+        "paypal"
+    ],
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "XtendLunar\\Addons\\PaymentGatewayPaypal\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Adam Lee",
+            "email": "adam@codelabx.ltd"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "illuminate/contracts": "^10.0",
+        "srmklive/paypal": "~3.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "XtendLunar\\Addons\\PaymentGatewayPaypal\\PaymentGatewayPaypalProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev"
+}
