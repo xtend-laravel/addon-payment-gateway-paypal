@@ -23,13 +23,79 @@ class PaymentIntent
         }
 
         $this->initPaypal();
+        $accessToken = static::$paypal->getAccessToken();
+
+        $orderId = $cart->meta->paypal_order_id ?? null;
+
+        $paypalOrder = !$orderId
+            ? $this->createOrder($cart)
+            : $this->updateOrder($cart);
+
+        if ($paypalOrder['status'] !== 'CREATED') {
+            return $next($cart);
+        }
 
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
-
+                'paypal_client_id' => config('paypal.sandbox.client_id'),
+                'paypal_order_id' => $paypalOrder['id'],
+                'paypal_client_token' => $accessToken,
             ]),
         ]);
 
         return $next($cart);
+    }
+
+    protected function createOrder(Cart $cart): array
+    {
+        $shipping = $cart->shippingAddress;
+
+        return static::$paypal->createOrder([
+            'intent' => 'CAPTURE',
+            'purchase_units' => [
+                [
+                    'amount' => [
+                        'currency_code' => $cart->currency->code,
+                        'value' => $cart->total->value,
+                    ],
+                    'custom_id' => $cart->id,
+                    'shipping' => [
+                        'name' => [
+                            'full_name' => "{$shipping->first_name} {$shipping->last_name}",
+                        ],
+                        'address' => [
+                            'address_line_1' => $shipping->line_one,
+                            'address_line_2' => $shipping->line_two,
+                            'admin_area_2' => $shipping->city,
+                            'admin_area_1' => $shipping->state,
+                            'postal_code' => $shipping->postcode,
+                            'country_code' => $shipping->country?->iso2,
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    protected function updateOrder(Cart $cart): array
+    {
+        $updateRequestBody = [
+            [
+                'op' => 'replace',
+                'path' => '/purchase_units/@reference_id==\'default\'/amount',
+                'value' => [
+                    'currency_code' => $cart->currency->code,
+                    'value' => $cart->total->value,
+                ],
+            ],
+        ];
+
+        $response = static::$paypal->updateOrder($cart->meta->paypal_order_id, $updateRequestBody);
+
+        if ($response['error'] ?? null) {
+            throw new \Exception($response['error']);
+        }
+
+        return static::$paypal->showOrderDetails($cart->meta->paypal_order_id);
     }
 }

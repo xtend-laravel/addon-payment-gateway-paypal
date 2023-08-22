@@ -32,7 +32,7 @@ class PaymentGatewayPaypalProvider extends XtendAddonProvider
         Blade::componentNamespace('XtendLunar\\Addons\\PaymentGatewayPaypal\\Components', 'xtend-lunar::payment-gateway-paypal');
 
         $this->app->singleton(PaypalConnectInterface::class, function ($app) {
-            return new PayPalClient(config('paypal.key'));
+            return new PayPalClient;
         });
 
         Payments::extend('paypal', function ($app) {

@@ -3,11 +3,14 @@
 namespace XtendLunar\Addons\PaymentGatewayPaypal\Concerns;
 
 use Illuminate\Support\Facades\App;
+use Srmklive\PayPal\Services\PayPal as PayPalClient;
 use XtendLunar\Addons\PaymentGatewayPaypal\Base\PaypalConnectInterface;
 
 trait WithPaypalClient
 {
-    protected static mixed $paypal;
+    protected static PayPalClient $paypal;
+
+    protected static mixed $accessToken;
 
     protected static function initPaypal(): void
     {
