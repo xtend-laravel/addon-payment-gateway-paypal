@@ -25,16 +25,16 @@ trait CanAuthorizePayment
             ]);
         }
 
-        if (! in_array($this->paymentIntent->status, [
-            'processing',
-            'requires_capture',
-            'succeeded',
-        ])) {
-            return new PaymentAuthorize(
-                success: false,
-                message: $this->paymentIntent->last_payment_error ?? 'Payment intent is not in a valid state',
-            );
-        }
+        // if (! in_array($this->paymentIntent->status, [
+        //     'processing',
+        //     'requires_capture',
+        //     'succeeded',
+        // ])) {
+        //     return new PaymentAuthorize(
+        //         success: false,
+        //         message: $this->paymentIntent->last_payment_error ?? 'Payment intent is not in a valid state',
+        //     );
+        // }
 
         return $this->releaseSuccess();
     }

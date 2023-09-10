@@ -3,6 +3,7 @@
 namespace XtendLunar\Addons\PaymentGatewayPaypal\Pipelines;
 
 use Closure;
+use Illuminate\Support\Facades\Http;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\PaymentGatewayPaypal\Concerns\WithPaypalClient;
 
@@ -27,19 +28,21 @@ class PaymentIntent
 
         $orderId = $cart->meta->paypal_order_id ?? null;
 
-        $paypalOrder = !$orderId
-            ? $this->createOrder($cart)
-            : $this->updateOrder($cart);
+//        $paypalOrder = !$orderId
+//            ? $this->createOrder($cart)
+//            : $this->updateOrder($cart);
+//
+//        if ($paypalOrder['status'] !== 'CREATED') {
+//            return $next($cart);
+//        }
 
-        if ($paypalOrder['status'] !== 'CREATED') {
-            return $next($cart);
-        }
+        $paypalOrder = $this->createOrder($cart);
 
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
                 'paypal_client_id' => config('paypal.sandbox.client_id'),
                 'paypal_order_id' => $paypalOrder['id'],
-                'paypal_client_token' => $accessToken,
+                'paypal_client_token' => static::$paypal->getClientToken()['client_token'],
             ]),
         ]);
 
@@ -49,6 +52,21 @@ class PaymentIntent
     protected function createOrder(Cart $cart): array
     {
         $shipping = $cart->shippingAddress;
+        $shippingRequest = $cart->shippingAddress ? [
+            'shipping' => [
+                'name' => [
+                    'full_name' => "{$shipping->first_name} {$shipping->last_name}",
+                ],
+                'address' => [
+                    'address_line_1' => $shipping->line_one,
+                    'address_line_2' => $shipping->line_two,
+                    'admin_area_2' => $shipping->city,
+                    'admin_area_1' => $shipping->state,
+                    'postal_code' => $shipping->postcode,
+                    'country_code' => $shipping->country?->iso2 ?? 'US',
+                ],
+            ],
+        ] : [];
 
         return static::$paypal->createOrder([
             'intent' => 'CAPTURE',
@@ -56,22 +74,10 @@ class PaymentIntent
                 [
                     'amount' => [
                         'currency_code' => $cart->currency->code,
-                        'value' => $cart->total->value,
+                        'value' => $cart->total->value / 100,
                     ],
                     'custom_id' => $cart->id,
-                    'shipping' => [
-                        'name' => [
-                            'full_name' => "{$shipping->first_name} {$shipping->last_name}",
-                        ],
-                        'address' => [
-                            'address_line_1' => $shipping->line_one,
-                            'address_line_2' => $shipping->line_two,
-                            'admin_area_2' => $shipping->city,
-                            'admin_area_1' => $shipping->state,
-                            'postal_code' => $shipping->postcode,
-                            'country_code' => $shipping->country?->iso2,
-                        ],
-                    ],
+                    ...$shippingRequest,
                 ],
             ],
         ]);
