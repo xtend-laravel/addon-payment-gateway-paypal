@@ -15,6 +15,7 @@ trait WithPaypalClient
     protected static function initPaypal(): void
     {
         static::$paypal = App::make(PaypalConnectInterface::class);
+        static::$paypal->getAccessToken();
     }
 
     protected static function withPaypalHeaders(array $headers = [], ?string $idempotencyKey = null): array

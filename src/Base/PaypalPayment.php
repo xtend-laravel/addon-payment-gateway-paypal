@@ -24,16 +24,4 @@ class PaypalPayment extends AbstractPaymentGateway implements OnlinePaymentGatew
         $this->initPaypal();
         return $this;
     }
-
-    public function handle()
-    {
-        dd('handle');
-        // Check if we have a valid order in the cart
-        if (! $this->cart->hasOrder()) {
-            return;
-        }
-
-        // Get the order
-        $this->order = $this->cart->order;
-    }
 }

@@ -2,6 +2,7 @@
 
 return [
     'mode' => env('PAYPAL_MODE', 'sandbox'),
+    'policy' => env('PAYPAL_POLICY', 'automatic'),
     'sandbox' => [
         'client_id' => env('PAYPAL_SANDBOX_CLIENT_ID'),
         'client_secret' => env('PAYPAL_SANDBOX_CLIENT_SECRET'),

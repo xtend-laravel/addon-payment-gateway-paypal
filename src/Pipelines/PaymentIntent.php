@@ -3,7 +3,6 @@
 namespace XtendLunar\Addons\PaymentGatewayPaypal\Pipelines;
 
 use Closure;
-use Illuminate\Support\Facades\Http;
 use Lunar\Models\Cart;
 use XtendLunar\Addons\PaymentGatewayPaypal\Concerns\WithPaypalClient;
 
@@ -24,25 +23,22 @@ class PaymentIntent
         }
 
         $this->initPaypal();
-        $accessToken = static::$paypal->getAccessToken();
-
         $orderId = $cart->meta->paypal_order_id ?? null;
+        $clientToken = $cart->meta->paypal_client_token ?? null;
 
-//        $paypalOrder = !$orderId
-//            ? $this->createOrder($cart)
-//            : $this->updateOrder($cart);
-//
-//        if ($paypalOrder['status'] !== 'CREATED') {
-//            return $next($cart);
-//        }
+        $paypalOrder = !$orderId
+           ? $this->createOrder($cart)
+           : $this->updateOrder($cart);
 
-        $paypalOrder = $this->createOrder($cart);
+        // if ($paypalOrder['status'] !== 'CREATED') {
+        //    return $next($cart);
+        // }
 
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
                 'paypal_client_id' => config('paypal.sandbox.client_id'),
                 'paypal_order_id' => $paypalOrder['id'],
-                'paypal_client_token' => static::$paypal->getClientToken()['client_token'],
+                'paypal_client_token' => $clientToken ?? static::$paypal->getClientToken()['client_token'],
             ]),
         ]);
 
@@ -83,6 +79,9 @@ class PaymentIntent
         ]);
     }
 
+    /**
+     * @throws \Throwable
+     */
     protected function updateOrder(Cart $cart): array
     {
         $updateRequestBody = [
@@ -91,7 +90,7 @@ class PaymentIntent
                 'path' => '/purchase_units/@reference_id==\'default\'/amount',
                 'value' => [
                     'currency_code' => $cart->currency->code,
-                    'value' => $cart->total->value,
+                    'value' => $cart->total->value / 100,
                 ],
             ],
         ];

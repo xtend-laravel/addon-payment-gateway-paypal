@@ -13,8 +13,38 @@ trait CanReleasePayment
      *
      * @return void
      */
-    private function releaseSuccess(): PaymentAuthorize
+    private function releaseSuccess(array $paypalOrder): PaymentAuthorize
     {
-        return new PaymentAuthorize(success: true);
+        $transactions = collect();
+
+        foreach ($paypalOrder['purchase_units'] as $purchaseUnit) {
+            foreach ($purchaseUnit['payments']['captures'] ?? [] as $capture) {
+                $transactions->push(
+                    [
+                        'success' => $capture['status'] == 'COMPLETED',
+                        'type' => 'capture',
+                        'driver' => 'paypal',
+                        'amount' => (int) ($capture['amount']['value'] * 100),
+                        'reference' => $capture['id'],
+                        'status' => $capture['status'] === 'COMPLETED' ? 'succeeded' : 'failed',
+                        'card_type' => 'paypal',
+                        'captured_at' => now()->parse($capture['create_time']),
+                    ]
+                );
+            }
+        }
+
+        $this->order->transactions()->createMany($transactions);
+
+        $this->order->update([
+            'status' => $this->config['released'] ?? 'payment-received',
+            'placed_at' => now(),
+        ]);
+
+        return new PaymentAuthorize(
+            success: true,
+            message: 'Payment successfully received',
+            orderId: $this->order->id,
+        );
     }
 }

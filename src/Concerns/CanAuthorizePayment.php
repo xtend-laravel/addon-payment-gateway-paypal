@@ -17,25 +17,45 @@ trait CanAuthorizePayment
             );
         }
 
-        if ($this->cart) {
-            $this->cart->update([
-                'meta' => collect($cart->meta ?? [])->merge([
+        $paypalOrderId = $this->cart->meta?->paypal_order_id ?? null;
+        $this->paymentIntent = static::$paypal->showOrderDetails($paypalOrderId);
 
+        if ($this->paymentIntent['status'] === 'APPROVED') {
+            $this->paymentIntent = static::$paypal->capturePaymentOrder($paypalOrderId);
+
+            if ($this->paymentIntent['error'] ?? false) {
+                return new PaymentAuthorize(
+                    success: false,
+                    message: collect($this->paymentIntent['error']['details'])->map(function ($detail) {
+                        return $detail['description'].'=>'.$detail['issue'];
+                    })->implode(' '),
+                    orderId: $this->order->id,
+                );
+            }
+            // @todo Handle errors
+
+            $this->cart->update([
+                'meta' => collect($this->cart->meta ?? [])->merge([
+                    'paypal_payment_intent' => $this->paymentIntent['id'],
                 ]),
             ]);
         }
 
-        // if (! in_array($this->paymentIntent->status, [
-        //     'processing',
-        //     'requires_capture',
-        //     'succeeded',
-        // ])) {
-        //     return new PaymentAuthorize(
-        //         success: false,
-        //         message: $this->paymentIntent->last_payment_error ?? 'Payment intent is not in a valid state',
-        //     );
-        // }
+        if (! $this->isPaymentIntentApproved()) {
+            return new PaymentAuthorize(
+                success: false,
+                message: 'Payment not approved',
+            );
+        }
 
-        return $this->releaseSuccess();
+        return $this->releaseSuccess($this->paymentIntent);
+    }
+
+    protected function isPaymentIntentApproved(): bool
+    {
+        return in_array($this->paymentIntent['status'], [
+            'COMPLETED',
+            'APPROVED',
+        ]);
     }
 }
