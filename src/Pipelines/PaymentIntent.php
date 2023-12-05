@@ -30,13 +30,11 @@ class PaymentIntent
            ? $this->createOrder($cart)
            : $this->updateOrder($cart);
 
-        // if ($paypalOrder['status'] !== 'CREATED') {
-        //    return $next($cart);
-        // }
-
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
-                'paypal_client_id' => config('paypal.sandbox.client_id'),
+                'paypal_client_id' => config('paypal.mode') === 'sandbox'
+                    ? config('paypal.sandbox.client_id')
+                    : config('paypal.live.client_id'),
                 'paypal_order_id' => $paypalOrder['id'],
                 'paypal_client_token' => $clientToken ?? static::$paypal->getClientToken()['client_token'],
             ]),

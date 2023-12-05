@@ -11,7 +11,9 @@ trait WithCreatePayment
 
         return [
             'paypal' => [
-                'clientId' => config('paypal.sandbox.client_id'),
+                'clientId' => config('paypal.mode') === 'sandbox'
+                    ? config('paypal.sandbox.client_id')
+                    : config('paypal.live.client_id'),
                 'orderId' => $paypalOrder['id'],
             ],
         ];
