@@ -26,9 +26,9 @@ class PaymentIntent
         $orderId = $cart->meta->paypal_order_id ?? null;
         $clientToken = $cart->meta->paypal_client_token ?? null;
 
-        $paypalOrder = !$orderId
-           ? $this->createOrder($cart)
-           : $this->updateOrder($cart);
+        $paypalOrder = $this->createOrder($cart);
+           // ? $this->createOrder($cart)
+           // : $this->updateOrder($cart);
 
         $cart->update([
             'meta' => collect($cart->meta ?? [])->merge([
@@ -85,7 +85,7 @@ class PaymentIntent
         $updateRequestBody = [
             [
                 'op' => 'replace',
-                'path' => '/purchase_units/@reference_id==\'PUHF\'/amount',
+                'path' => '/purchase_units/@reference_id==\'default\'/amount',
                 'value' => [
                     'currency_code' => $cart->currency->code,
                     'value' => $cart->total->value / 100,
