@@ -85,7 +85,7 @@ class PaymentIntent
         $updateRequestBody = [
             [
                 'op' => 'replace',
-                'path' => '/purchase_units/@reference_id==\'default\'/amount',
+                'path' => '/purchase_units/0/amount',
                 'value' => [
                     'currency_code' => $cart->currency->code,
                     'value' => $cart->total->value / 100,
