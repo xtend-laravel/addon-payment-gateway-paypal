@@ -23,7 +23,7 @@ class PaymentGatewayPaypalProvider extends XtendAddonProvider
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'xtend-lunar::payment-gateway-paypal');
         $this->loadRestifyFrom(__DIR__.'/Restify', __NAMESPACE__.'\\Restify\\');
 
-        $this->registerWithCartPipeline([PaymentIntent::class]);
+        //$this->registerWithCartPipeline([PaymentIntent::class]);
         $this->mergeConfigFrom(__DIR__.'/../config/paypal.php', 'paypal');
     }
 
