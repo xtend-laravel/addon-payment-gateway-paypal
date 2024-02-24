@@ -1,6 +1,6 @@
 <?php
 
-namespace XtendLunar\Addons\PaymentGatewayStripe\Restify;
+namespace XtendLunar\Addons\PaymentGatewayPaypal\Restify;
 
 use XtendLunar\Addons\PaymentGatewayStripe\Restify\Presenters\StripePresenter;
 use XtendLunar\Addons\RestifyApi\Restify\Repository;
